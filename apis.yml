@@ -1,0 +1,70 @@
+aid: sentinelone
+name: SentinelOne
+description: >-
+  SentinelOne is an AI-driven extended detection and response (XDR) cloud
+  security platform delivering autonomous endpoint protection, EDR, identity
+  security, cloud workload protection, and threat hunting through its
+  Singularity Platform. The Management API exposes the same operations as the
+  web console for agents, threats, alerts, sites, accounts, exclusions, and
+  policy management. Authentication uses tenant-issued API tokens passed in
+  the Authorization header as `ApiToken <token>`.
+type: Index
+image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
+tags:
+  - Security
+  - XDR
+  - EDR
+  - Endpoint Protection
+  - Threat Detection
+  - Incident Response
+  - Cloud Security
+  - Identity Security
+url: >-
+  https://raw.githubusercontent.com/api-evangelist/sentinelone/refs/heads/main/apis.yml
+created: '2026-05-11'
+modified: '2026-05-11'
+specificationVersion: '0.19'
+apis:
+  - aid: sentinelone:management-api
+    name: SentinelOne Management API
+    description: >-
+      Tenant-scoped REST API for managing agents, threats, alerts, sites,
+      accounts, exclusions, policies, and reporting in the SentinelOne
+      Singularity Platform. Each customer accesses the API at their own
+      management console hostname under /web/api/v2.1 with an ApiToken
+      Authorization header issued from console user settings.
+    humanURL: https://<tenant>.sentinelone.net/api-doc/overview
+    baseURL: https://<tenant>.sentinelone.net/web/api/v2.1
+    tags:
+      - XDR
+      - EDR
+      - Endpoint Security
+      - Threat Management
+      - REST
+    properties:
+      - type: Documentation
+        url: https://<tenant>.sentinelone.net/api-doc/overview
+      - type: Authentication
+        url: >-
+          https://www.stitchflow.com/user-management/sentinelone/api
+      - type: Postman Collection
+        url: >-
+          https://www.postman.com/api-evangelist/sentinelone/documentation/btzef0x/sentinelone
+common:
+  - type: Website
+    url: https://www.sentinelone.com
+  - type: Documentation
+    url: https://www.sentinelone.com/resources/
+  - type: Pricing
+    url: https://www.sentinelone.com/platform-packages/
+  - type: Sign Up
+    url: https://www.sentinelone.com/request-demo/
+  - type: Support
+    url: https://www.sentinelone.com/support/
+  - type: Blog
+    url: https://www.sentinelone.com/blog/
+  - type: LinkedIn
+    url: https://www.linkedin.com/company/sentinelone/
+maintainers:
+  - FN: Kin Lane
+    email: kin@apievangelist.com
