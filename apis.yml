@@ -57,7 +57,7 @@ common:
     url: https://www.sentinelone.com/resources/
   - type: Pricing
     url: https://www.sentinelone.com/platform-packages/
-  - type: Sign Up
+  - type: SignUp
     url: https://www.sentinelone.com/request-demo/
   - type: Support
     url: https://www.sentinelone.com/support/
