@@ -51,6 +51,8 @@ apis:
         url: >-
           https://www.postman.com/api-evangelist/sentinelone/documentation/btzef0x/sentinelone
 common:
+  - type: GitHubOrganization
+    url: https://github.com/Sentinel-One
   - type: Website
     url: https://www.sentinelone.com
   - type: Documentation
