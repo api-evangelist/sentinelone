@@ -1,0 +1,1309 @@
+"""
+SentinelOne GraphQL Schema
+Conceptual schema derived from the SentinelOne Singularity Platform REST API.
+Covers agent management, threat detection, alerts, automated response, forensics,
+vulnerability data, deep visibility queries, threat hunting, and security policy management.
+"""
+
+# ─── Scalars ───────────────────────────────────────────────────────────────────
+
+scalar DateTime
+scalar JSON
+scalar UUID
+scalar IPAddress
+scalar MacAddress
+scalar SHA256
+scalar MD5
+
+# ─── Enums ─────────────────────────────────────────────────────────────────────
+
+enum AgentStatus {
+  ACTIVE
+  INACTIVE
+  DISCONNECTED
+  DECOMMISSIONED
+  UNMANAGED
+}
+
+enum ThreatStatus {
+  ACTIVE
+  MITIGATED
+  RESOLVED
+  IN_PROGRESS
+  BLOCKED
+}
+
+enum MitigationStatus {
+  MARKED_AS_BENIGN
+  MARKED_AS_THREAT
+  MITIGATED
+  NOT_MITIGATED
+  ROLLBACK_FAILED
+  ROLLED_BACK
+  SUSPICIOUS
+  SUSPICIOUS_RESOLVED
+}
+
+enum AlertSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+enum AlertStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  SUPPRESSED
+}
+
+enum OsType {
+  WINDOWS
+  MACOS
+  LINUX
+  WINDOWS_LEGACY
+  ANDROID
+  IOS
+}
+
+enum InfectedStatus {
+  INFECTED
+  NOT_INFECTED
+  UNKNOWN
+}
+
+enum ScanStatus {
+  NONE
+  STARTED
+  ABORTED
+  FINISHED
+  FAILED
+  STARTED_BY_POLICY
+}
+
+enum ConfidenceLevel {
+  MALICIOUS
+  SUSPICIOUS
+  PENDING_DISPOSITION
+  N_A
+}
+
+enum NetworkStatus {
+  CONNECTED
+  DISCONNECTED
+  CONNECTING
+  DISCONNECTING
+}
+
+enum PolicyMode {
+  PROTECT
+  DETECT
+  OFF
+}
+
+enum VulnerabilitySeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  NONE
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
+enum ActionType {
+  QUARANTINE
+  KILL
+  REMEDIATE
+  ROLLBACK
+  DISCONNECT_FROM_NETWORK
+  RECONNECT_TO_NETWORK
+  INITIATE_SCAN
+  ABORT_SCAN
+  FETCH_LOGS
+}
+
+enum ExclusionType {
+  WHITE_USER_CERTIFICATE
+  BLACK_HASH
+  WHITE_HASH
+  WHITE_PATH
+  WHITE_PROCESS
+  WHITE_CERTIFICATE
+  SUPPRESS_DYNAMIC_RULE_ALERT
+  SUPPRESS_ALERT
+}
+
+enum RuleAction {
+  ALERT
+  BLOCK
+  DETECT
+}
+
+enum IncidentStatus {
+  UNRESOLVED
+  IN_PROGRESS
+  RESOLVED
+}
+
+# ─── Pagination ────────────────────────────────────────────────────────────────
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+  totalCount: Int!
+}
+
+input PaginationInput {
+  limit: Int
+  cursor: String
+  skip: Int
+}
+
+input SortInput {
+  field: String!
+  order: SortOrder!
+}
+
+# ─── Account & Site Hierarchy ──────────────────────────────────────────────────
+
+type Account {
+  id: UUID!
+  name: String!
+  state: String
+  tier: String
+  totalLicenses: Int
+  activeLicenses: Int
+  expiration: DateTime
+  sites: SiteConnection!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type AccountConnection {
+  nodes: [Account!]!
+  pageInfo: PageInfo!
+}
+
+type Site {
+  id: UUID!
+  accountId: UUID!
+  account: Account
+  name: String!
+  state: String
+  description: String
+  policy: Policy
+  agents: AgentConnection!
+  totalAgents: Int
+  activeAgents: Int
+  registrationToken: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type SiteConnection {
+  nodes: [Site!]!
+  pageInfo: PageInfo!
+}
+
+type Group {
+  id: UUID!
+  siteId: UUID!
+  site: Site
+  name: String!
+  type: String
+  description: String
+  rank: Int
+  policy: Policy
+  agentCount: Int
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type GroupConnection {
+  nodes: [Group!]!
+  pageInfo: PageInfo!
+}
+
+# ─── Agents ───────────────────────────────────────────────────────────────────
+
+type Agent {
+  id: UUID!
+  uuid: UUID!
+  siteId: UUID!
+  site: Site
+  groupId: UUID
+  group: Group
+  computerName: String!
+  networkInterfaces: [NetworkInterface!]!
+  osType: OsType!
+  osName: String
+  osVersion: String
+  osRevision: String
+  agentVersion: String
+  status: AgentStatus!
+  isActive: Boolean!
+  isDecommissioned: Boolean!
+  isInfected: InfectedStatus
+  isUpToDate: Boolean
+  isPendingUninstall: Boolean
+  networkStatus: NetworkStatus
+  scanStatus: ScanStatus
+  lastActiveDate: DateTime
+  lastLoggedInUserName: String
+  domain: String
+  machineType: String
+  modelName: String
+  cpuId: String
+  cpuCount: Int
+  memoryCapacity: Int
+  encryptedApplications: Boolean
+  firewallEnabled: Boolean
+  remoteProfilingState: String
+  policy: Policy
+  threats: ThreatConnection!
+  vulnerabilities: VulnerabilityConnection!
+  registeredAt: DateTime!
+  updatedAt: DateTime!
+  externalId: String
+  activeThreats: Int
+  mitigationMode: String
+  scanAbortedAt: DateTime
+  scanFinishedAt: DateTime
+  scanStartedAt: DateTime
+}
+
+type AgentConnection {
+  nodes: [Agent!]!
+  pageInfo: PageInfo!
+}
+
+type NetworkInterface {
+  id: UUID
+  name: String!
+  inet: [IPAddress!]
+  inet6: [IPAddress!]
+  physical: MacAddress
+  gatewayIp: IPAddress
+  gatewayMac: MacAddress
+}
+
+input AgentFilterInput {
+  ids: [UUID!]
+  siteIds: [UUID!]
+  groupIds: [UUID!]
+  accountIds: [UUID!]
+  status: AgentStatus
+  osType: OsType
+  networkStatus: NetworkStatus
+  isActive: Boolean
+  isDecommissioned: Boolean
+  isInfected: Boolean
+  computerName: String
+  domain: String
+  query: String
+}
+
+# ─── Threats ──────────────────────────────────────────────────────────────────
+
+type Threat {
+  id: UUID!
+  agentId: UUID!
+  agent: Agent
+  siteId: UUID!
+  site: Site
+  filePath: String
+  fileName: String
+  fileSize: Int
+  fileSha256: SHA256
+  fileMd5: MD5
+  classification: String
+  classificationSource: String
+  confidenceLevel: ConfidenceLevel
+  status: ThreatStatus!
+  mitigationStatus: MitigationStatus
+  incidentStatus: IncidentStatus
+  analystVerdict: String
+  initiatedBy: String
+  initiatedByDescription: String
+  threatName: String
+  publisherName: String
+  rebootRequired: Boolean
+  rollbackable: Boolean
+  containerInfo: ContainerInfo
+  cloudFilesHashVerdict: String
+  mitigatedPreemptively: Boolean
+  engines: [String!]
+  indicators: [ThreatIndicator!]
+  storyline: String
+  browserType: String
+  detectedAt: DateTime!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ThreatConnection {
+  nodes: [Threat!]!
+  pageInfo: PageInfo!
+}
+
+type ThreatIndicator {
+  category: String!
+  description: String
+  ids: [Int!]
+  tactics: [String!]
+  techniques: [String!]
+}
+
+type ContainerInfo {
+  id: UUID
+  name: String
+  image: String
+  labels: JSON
+}
+
+input ThreatFilterInput {
+  ids: [UUID!]
+  agentIds: [UUID!]
+  siteIds: [UUID!]
+  accountIds: [UUID!]
+  status: ThreatStatus
+  mitigationStatus: MitigationStatus
+  confidenceLevel: ConfidenceLevel
+  incidentStatus: IncidentStatus
+  fileSha256: SHA256
+  query: String
+  createdAtAfter: DateTime
+  createdAtBefore: DateTime
+}
+
+# ─── Alerts ───────────────────────────────────────────────────────────────────
+
+type Alert {
+  id: UUID!
+  alertInfo: AlertInfo!
+  agentRealtimeInfo: AgentRealtimeInfo
+  ruleInfo: RuleInfo
+  sourceProcess: ProcessInfo
+  targetProcess: ProcessInfo
+  containerInfo: ContainerInfo
+  whiteningOptions: [String!]
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type AlertConnection {
+  nodes: [Alert!]!
+  pageInfo: PageInfo!
+}
+
+type AlertInfo {
+  alertId: UUID!
+  analystVerdict: String
+  attackingIpAddress: IPAddress
+  classificationSource: String
+  confidenceLevel: ConfidenceLevel
+  createdAt: DateTime!
+  description: String
+  dnsRequest: String
+  dnsResponse: String
+  dstIp: IPAddress
+  dstPort: Int
+  dvEventId: String
+  eventType: String
+  hitType: String
+  indicatorCategory: String
+  indicatorDescription: String
+  indicatorName: String
+  loginIsAdministratorEquivalent: Boolean
+  loginType: String
+  modulePath: String
+  moduleSha256: SHA256
+  netEventDirection: String
+  registryKeyPath: String
+  registryOldValue: String
+  registryOldValueType: String
+  registryValue: String
+  reportedAt: DateTime
+  severity: AlertSeverity!
+  srcIp: IPAddress
+  srcPort: Int
+  status: AlertStatus!
+  storyline: String
+  threatId: UUID
+  tiIndicatorComparisonMethod: String
+  tiIndicatorSource: String
+  tiIndicatorType: String
+  tiIndicatorValue: String
+  updatedAt: DateTime!
+}
+
+type AgentRealtimeInfo {
+  agentId: UUID!
+  agentOsRevision: String
+  agentOsType: OsType
+  agentVersion: String
+  domainName: String
+  externalIp: IPAddress
+  groupId: UUID
+  groupName: String
+  isDecommissioned: Boolean
+  networkStatus: NetworkStatus
+  operationalState: String
+  rebootRequired: Boolean
+  scanFinishedAt: DateTime
+  scanStatus: ScanStatus
+  siteId: UUID!
+  siteName: String
+  userActionsNeeded: [String!]
+}
+
+type RuleInfo {
+  id: UUID
+  name: String
+  queryLang: String
+  queryType: String
+  s1ql: String
+  severity: AlertSeverity
+  description: String
+  treatAsThreat: String
+  logType: String
+  scope: String
+  scopeId: UUID
+  status: String
+  treatAsThreatName: String
+}
+
+type ProcessInfo {
+  filePath: String
+  fileIsExecutable: Boolean
+  fileIsSigned: Boolean
+  fileSignerIdentity: String
+  fileSha256: SHA256
+  fileMd5: MD5
+  name: String
+  pid: Int
+  publisher: String
+  cmdline: String
+  parentName: String
+  parentPid: Int
+  storyline: String
+  uniqueKey: String
+  user: String
+  subsystem: String
+  integrityLevel: String
+  isRedirectedCommandProcessor: Boolean
+  isStorylineRoot: Boolean
+}
+
+input AlertFilterInput {
+  ids: [UUID!]
+  agentIds: [UUID!]
+  siteIds: [UUID!]
+  accountIds: [UUID!]
+  severity: AlertSeverity
+  status: AlertStatus
+  query: String
+  createdAtAfter: DateTime
+  createdAtBefore: DateTime
+  ruleId: UUID
+}
+
+# ─── Policy ───────────────────────────────────────────────────────────────────
+
+type Policy {
+  id: UUID!
+  name: String
+  description: String
+  mitigationMode: PolicyMode!
+  mitigationModeSuspicious: PolicyMode!
+  monitorOnExecution: Boolean
+  monitorOnWrite: Boolean
+  blockUsb: Boolean
+  scanNewAgents: Boolean
+  autoMitigate: Boolean
+  networkQuarantineOnMitigate: Boolean
+  remoteShellEnabled: Boolean
+  scheduledScanEnabled: Boolean
+  scheduledScanDay: Int
+  scheduledScanTime: String
+  antiTamperEnabled: Boolean
+  runtimeDetections: Boolean
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input PolicyUpdateInput {
+  mitigationMode: PolicyMode
+  mitigationModeSuspicious: PolicyMode
+  monitorOnExecution: Boolean
+  monitorOnWrite: Boolean
+  blockUsb: Boolean
+  scanNewAgents: Boolean
+  autoMitigate: Boolean
+  networkQuarantineOnMitigate: Boolean
+  remoteShellEnabled: Boolean
+  scheduledScanEnabled: Boolean
+  antiTamperEnabled: Boolean
+}
+
+# ─── Exclusions ───────────────────────────────────────────────────────────────
+
+type Exclusion {
+  id: UUID!
+  type: ExclusionType!
+  value: String!
+  description: String
+  source: String
+  userId: UUID
+  siteId: UUID
+  groupId: UUID
+  accountId: UUID
+  pathExclusionType: String
+  mode: String
+  osType: OsType
+  actions: [String!]
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ExclusionConnection {
+  nodes: [Exclusion!]!
+  pageInfo: PageInfo!
+}
+
+input ExclusionCreateInput {
+  type: ExclusionType!
+  value: String!
+  description: String
+  osType: OsType
+  mode: String
+  pathExclusionType: String
+  siteIds: [UUID!]
+  groupIds: [UUID!]
+  accountIds: [UUID!]
+}
+
+# ─── Deep Visibility / Queries ────────────────────────────────────────────────
+
+type DeepVisibilityQuery {
+  id: UUID!
+  s1ql: String!
+  status: QueryStatus!
+  fromDate: DateTime!
+  toDate: DateTime!
+  queryType: String
+  responseState: String
+  progressStatus: Int
+  totalResponses: Int
+  alerts: AlertConnection
+  events: [DeepVisibilityEvent!]
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum QueryStatus {
+  CREATED
+  RUNNING
+  FINISHED
+  FAILED
+  CANCELED
+}
+
+type DeepVisibilityEvent {
+  eventType: String!
+  agentId: UUID
+  agentComputerName: String
+  agentDomain: String
+  agentIp: IPAddress
+  agentOsType: OsType
+  eventTime: DateTime!
+  tid: String
+  pid: Int
+  processName: String
+  processPath: String
+  processCmdLine: String
+  processSignedStatus: String
+  sha256: SHA256
+  md5: MD5
+  srcIp: IPAddress
+  srcPort: Int
+  dstIp: IPAddress
+  dstPort: Int
+  networkDirection: String
+  networkProtocol: String
+  dnsRequest: String
+  dnsResponse: String
+  registryKeyPath: String
+  registryValue: String
+  filePath: String
+  oldFilePath: String
+  taskName: String
+  taskPath: String
+  loginUserName: String
+  loginType: String
+  storyline: String
+  indicatorName: String
+  indicatorCategory: String
+  indicatorDescription: String
+}
+
+input DeepVisibilityQueryInput {
+  query: String!
+  fromDate: DateTime!
+  toDate: DateTime!
+  siteIds: [UUID!]
+  accountIds: [UUID!]
+  groupIds: [UUID!]
+  queryType: String
+}
+
+# ─── Vulnerabilities ──────────────────────────────────────────────────────────
+
+type Vulnerability {
+  id: UUID!
+  applicationName: String!
+  applicationVersion: String
+  cveId: String
+  cvssScore: Float
+  severity: VulnerabilitySeverity!
+  riskScore: Float
+  description: String
+  publishedAt: DateTime
+  patchedVersion: String
+  nativeId: String
+  agentId: UUID!
+  agent: Agent
+  siteId: UUID
+  accountId: UUID
+  detectedAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type VulnerabilityConnection {
+  nodes: [Vulnerability!]!
+  pageInfo: PageInfo!
+}
+
+input VulnerabilityFilterInput {
+  agentIds: [UUID!]
+  siteIds: [UUID!]
+  accountIds: [UUID!]
+  severity: VulnerabilitySeverity
+  cveId: String
+  applicationName: String
+}
+
+# ─── Threat Hunting / Rules ───────────────────────────────────────────────────
+
+type ThreatHuntingRule {
+  id: UUID!
+  name: String!
+  description: String
+  query: String!
+  queryType: String
+  severity: AlertSeverity!
+  action: RuleAction!
+  scope: String
+  scopeId: UUID
+  status: String
+  treatAsThreat: String
+  expiration: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  creator: User
+  mitreTechniques: [MitreTechnique!]
+}
+
+type ThreatHuntingRuleConnection {
+  nodes: [ThreatHuntingRule!]!
+  pageInfo: PageInfo!
+}
+
+input ThreatHuntingRuleCreateInput {
+  name: String!
+  description: String
+  query: String!
+  queryType: String
+  severity: AlertSeverity!
+  action: RuleAction!
+  scope: String
+  scopeId: UUID
+  treatAsThreat: String
+  expiration: DateTime
+  mitreTechniqueIds: [String!]
+}
+
+type MitreTechnique {
+  id: String!
+  name: String!
+  tactic: String
+  description: String
+}
+
+# ─── Actions / Response ───────────────────────────────────────────────────────
+
+type AgentAction {
+  id: UUID!
+  type: ActionType!
+  status: String!
+  agentId: UUID!
+  agent: Agent
+  initiatedBy: String
+  completedAt: DateTime
+  error: String
+  createdAt: DateTime!
+}
+
+type AgentActionConnection {
+  nodes: [AgentAction!]!
+  pageInfo: PageInfo!
+}
+
+input AgentActionInput {
+  agentIds: [UUID!]!
+  type: ActionType!
+  parameters: JSON
+}
+
+type BulkActionResult {
+  pending: Int!
+  affected: Int!
+  failed: Int!
+  errors: [BulkActionError!]
+}
+
+type BulkActionError {
+  agentId: UUID!
+  error: String!
+}
+
+# ─── Forensics ────────────────────────────────────────────────────────────────
+
+type ForensicActivity {
+  id: UUID!
+  threatId: UUID!
+  threat: Threat
+  agentId: UUID!
+  agent: Agent
+  eventType: String!
+  eventTime: DateTime!
+  pid: Int
+  processName: String
+  processPath: String
+  cmdLine: String
+  filePath: String
+  registryKey: String
+  srcIp: IPAddress
+  dstIp: IPAddress
+  dstPort: Int
+  networkProtocol: String
+  taskName: String
+  storyline: String
+  parentPid: Int
+  parentProcessName: String
+}
+
+type ForensicActivityConnection {
+  nodes: [ForensicActivity!]!
+  pageInfo: PageInfo!
+}
+
+# ─── Remote Shell ─────────────────────────────────────────────────────────────
+
+type RemoteShellSession {
+  id: UUID!
+  agentId: UUID!
+  agent: Agent
+  status: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input RemoteShellCommandInput {
+  sessionId: UUID!
+  command: String!
+  timeout: Int
+}
+
+type RemoteShellCommandResult {
+  sessionId: UUID!
+  output: String
+  exitCode: Int
+  error: String
+}
+
+# ─── Users & Roles ────────────────────────────────────────────────────────────
+
+type User {
+  id: UUID!
+  email: String!
+  fullName: String
+  role: Role
+  accountId: UUID
+  siteIds: [UUID!]
+  twoFaEnabled: Boolean
+  dateJoined: DateTime
+  lastLogin: DateTime
+  source: String
+  apiToken: String
+}
+
+type UserConnection {
+  nodes: [User!]!
+  pageInfo: PageInfo!
+}
+
+type Role {
+  id: UUID!
+  name: String!
+  description: String
+  permissions: [Permission!]
+  isBuiltIn: Boolean
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Permission {
+  permission: String!
+  name: String
+  description: String
+  category: String
+}
+
+input UserCreateInput {
+  email: String!
+  fullName: String!
+  roleId: UUID!
+  accountId: UUID
+  siteIds: [UUID!]
+}
+
+# ─── Packages ─────────────────────────────────────────────────────────────────
+
+type AgentPackage {
+  id: UUID!
+  fileExtension: String
+  fileName: String
+  fileSize: Int
+  fileSha1: String
+  link: String
+  majorVersion: String
+  minorVersion: String
+  osType: OsType!
+  packageType: String
+  platformType: String
+  rangerVersion: String
+  scopeLevel: String
+  siteId: UUID
+  status: String
+  version: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type AgentPackageConnection {
+  nodes: [AgentPackage!]!
+  pageInfo: PageInfo!
+}
+
+# ─── Reports ──────────────────────────────────────────────────────────────────
+
+type Report {
+  id: UUID!
+  name: String!
+  format: String
+  status: String!
+  schedule: String
+  scheduleDay: Int
+  scheduleTime: String
+  siteId: UUID
+  accountId: UUID
+  fromDate: DateTime
+  toDate: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  downloadUrl: String
+}
+
+type ReportConnection {
+  nodes: [Report!]!
+  pageInfo: PageInfo!
+}
+
+# ─── Activity Log ─────────────────────────────────────────────────────────────
+
+type ActivityLog {
+  id: UUID!
+  activityType: Int!
+  agentId: UUID
+  groupId: UUID
+  siteId: UUID
+  accountId: UUID
+  userId: UUID
+  user: User
+  data: JSON
+  description: String
+  primaryDescription: String
+  secondaryDescription: String
+  createdAt: DateTime!
+}
+
+type ActivityLogConnection {
+  nodes: [ActivityLog!]!
+  pageInfo: PageInfo!
+}
+
+input ActivityLogFilterInput {
+  agentIds: [UUID!]
+  siteIds: [UUID!]
+  accountIds: [UUID!]
+  userId: UUID
+  activityTypes: [Int!]
+  createdAtAfter: DateTime
+  createdAtBefore: DateTime
+}
+
+# ─── Ranger (Network Discovery) ───────────────────────────────────────────────
+
+type RangerDevice {
+  id: UUID!
+  siteId: UUID!
+  agentId: UUID
+  ipV4Address: IPAddress
+  ipV6Addresses: [IPAddress!]
+  macAddress: MacAddress
+  deviceType: String
+  manufacturer: String
+  networkName: String
+  osType: OsType
+  osVersion: String
+  openPorts: [OpenPort!]
+  firstSeen: DateTime!
+  lastSeen: DateTime!
+  managedState: String
+  subnetAddress: IPAddress
+}
+
+type OpenPort {
+  port: Int!
+  protocol: String
+  serviceName: String
+}
+
+type RangerDeviceConnection {
+  nodes: [RangerDevice!]!
+  pageInfo: PageInfo!
+}
+
+# ─── Cloud Workload (Kubernetes / Container) ──────────────────────────────────
+
+type KubernetesCluster {
+  id: UUID!
+  name: String!
+  cloudType: String
+  region: String
+  agentCount: Int
+  nodeCount: Int
+  siteId: UUID
+  accountId: UUID
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type KubernetesClusterConnection {
+  nodes: [KubernetesCluster!]!
+  pageInfo: PageInfo!
+}
+
+# ─── Threat Intelligence ──────────────────────────────────────────────────────
+
+type ThreatIntelIndicator {
+  id: UUID!
+  type: String!
+  value: String!
+  source: String
+  description: String
+  score: Int
+  expirationDate: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ThreatIntelIndicatorConnection {
+  nodes: [ThreatIntelIndicator!]!
+  pageInfo: PageInfo!
+}
+
+input ThreatIntelIndicatorInput {
+  type: String!
+  value: String!
+  source: String
+  description: String
+  score: Int
+  expirationDate: DateTime
+}
+
+# ─── STAR Custom Rules ────────────────────────────────────────────────────────
+
+type StarRule {
+  id: UUID!
+  name: String!
+  description: String
+  query: String!
+  expirationMode: String
+  expiredAt: DateTime
+  networkQuarantineEnabled: Boolean
+  treatAsThreat: String
+  severity: AlertSeverity
+  siteId: UUID
+  accountId: UUID
+  status: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type StarRuleConnection {
+  nodes: [StarRule!]!
+  pageInfo: PageInfo!
+}
+
+input StarRuleCreateInput {
+  name: String!
+  description: String
+  query: String!
+  expirationMode: String
+  expiredAt: DateTime
+  networkQuarantineEnabled: Boolean
+  treatAsThreat: String
+  severity: AlertSeverity
+  siteIds: [UUID!]
+  accountIds: [UUID!]
+}
+
+# ─── Incidents ────────────────────────────────────────────────────────────────
+
+type Incident {
+  id: UUID!
+  name: String
+  status: IncidentStatus!
+  severity: AlertSeverity
+  assignedToUserId: UUID
+  assignedTo: User
+  siteId: UUID!
+  site: Site
+  alerts: AlertConnection!
+  threats: ThreatConnection!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  resolvedAt: DateTime
+  description: String
+}
+
+type IncidentConnection {
+  nodes: [Incident!]!
+  pageInfo: PageInfo!
+}
+
+input IncidentFilterInput {
+  ids: [UUID!]
+  siteIds: [UUID!]
+  status: IncidentStatus
+  severity: AlertSeverity
+  assignedToUserId: UUID
+  createdAtAfter: DateTime
+  createdAtBefore: DateTime
+}
+
+# ─── Queries ──────────────────────────────────────────────────────────────────
+
+type Query {
+  # Accounts
+  account(id: UUID!): Account
+  accounts(filter: String, pagination: PaginationInput, sort: SortInput): AccountConnection!
+
+  # Sites
+  site(id: UUID!): Site
+  sites(accountId: UUID, filter: String, pagination: PaginationInput, sort: SortInput): SiteConnection!
+
+  # Groups
+  group(id: UUID!): Group
+  groups(siteId: UUID, filter: String, pagination: PaginationInput): GroupConnection!
+
+  # Agents
+  agent(id: UUID!): Agent
+  agents(filter: AgentFilterInput, pagination: PaginationInput, sort: SortInput): AgentConnection!
+  agentCount(filter: AgentFilterInput): Int!
+
+  # Threats
+  threat(id: UUID!): Threat
+  threats(filter: ThreatFilterInput, pagination: PaginationInput, sort: SortInput): ThreatConnection!
+  threatCount(filter: ThreatFilterInput): Int!
+
+  # Alerts
+  alert(id: UUID!): Alert
+  alerts(filter: AlertFilterInput, pagination: PaginationInput, sort: SortInput): AlertConnection!
+
+  # Policy
+  policy(id: UUID!): Policy
+  sitePolicies(siteId: UUID!): Policy
+  accountPolicy(accountId: UUID!): Policy
+
+  # Exclusions
+  exclusions(type: ExclusionType, siteIds: [UUID!], pagination: PaginationInput): ExclusionConnection!
+
+  # Deep Visibility
+  deepVisibilityQuery(id: UUID!): DeepVisibilityQuery
+  deepVisibilityEvents(queryId: UUID!, pagination: PaginationInput): [DeepVisibilityEvent!]!
+
+  # Vulnerabilities
+  vulnerabilities(filter: VulnerabilityFilterInput, pagination: PaginationInput, sort: SortInput): VulnerabilityConnection!
+
+  # Threat Hunting Rules
+  threatHuntingRule(id: UUID!): ThreatHuntingRule
+  threatHuntingRules(siteIds: [UUID!], pagination: PaginationInput): ThreatHuntingRuleConnection!
+
+  # Agent Actions
+  agentAction(id: UUID!): AgentAction
+  agentActions(agentId: UUID!, pagination: PaginationInput): AgentActionConnection!
+
+  # Forensics
+  forensicActivities(threatId: UUID!, pagination: PaginationInput): ForensicActivityConnection!
+
+  # Users
+  user(id: UUID!): User
+  users(accountId: UUID, pagination: PaginationInput): UserConnection!
+  currentUser: User
+
+  # Roles
+  roles(accountId: UUID): [Role!]!
+
+  # Packages
+  agentPackages(osType: OsType, siteId: UUID, pagination: PaginationInput): AgentPackageConnection!
+
+  # Reports
+  reports(siteId: UUID, accountId: UUID, pagination: PaginationInput): ReportConnection!
+
+  # Activity Log
+  activityLogs(filter: ActivityLogFilterInput, pagination: PaginationInput): ActivityLogConnection!
+
+  # Ranger
+  rangerDevices(siteId: UUID!, pagination: PaginationInput): RangerDeviceConnection!
+
+  # Kubernetes Clusters
+  kubernetesClusters(accountId: UUID, pagination: PaginationInput): KubernetesClusterConnection!
+
+  # Threat Intelligence
+  threatIntelIndicators(type: String, pagination: PaginationInput): ThreatIntelIndicatorConnection!
+
+  # STAR Rules
+  starRule(id: UUID!): StarRule
+  starRules(siteIds: [UUID!], pagination: PaginationInput): StarRuleConnection!
+
+  # Incidents
+  incident(id: UUID!): Incident
+  incidents(filter: IncidentFilterInput, pagination: PaginationInput, sort: SortInput): IncidentConnection!
+
+  # MITRE
+  mitreTechniques: [MitreTechnique!]!
+}
+
+# ─── Mutations ────────────────────────────────────────────────────────────────
+
+type Mutation {
+  # Agent Actions
+  disconnectAgentFromNetwork(agentIds: [UUID!]!): BulkActionResult!
+  reconnectAgentToNetwork(agentIds: [UUID!]!): BulkActionResult!
+  initiateAgentScan(agentIds: [UUID!]!): BulkActionResult!
+  abortAgentScan(agentIds: [UUID!]!): BulkActionResult!
+  decommissionAgents(agentIds: [UUID!]!): BulkActionResult!
+  fetchAgentLogs(agentIds: [UUID!]!): BulkActionResult!
+  moveAgentsToGroup(agentIds: [UUID!]!, groupId: UUID!): BulkActionResult!
+
+  # Threat Actions
+  mitigateThreat(threatIds: [UUID!]!, action: MitigationStatus!): BulkActionResult!
+  markThreatAsResolved(threatIds: [UUID!]!): BulkActionResult!
+  markThreatAsBenign(threatIds: [UUID!]!, whiteningOption: String): BulkActionResult!
+  rollbackThreats(threatIds: [UUID!]!): BulkActionResult!
+  addThreatNote(threatId: UUID!, note: String!): Threat!
+
+  # Alert Actions
+  updateAlertStatus(alertIds: [UUID!]!, status: AlertStatus!): BulkActionResult!
+  updateAlertAnalystVerdict(alertIds: [UUID!]!, verdict: String!): BulkActionResult!
+
+  # Incident Actions
+  createIncident(name: String!, siteId: UUID!, severity: AlertSeverity!): Incident!
+  updateIncidentStatus(incidentId: UUID!, status: IncidentStatus!): Incident!
+  assignIncident(incidentId: UUID!, userId: UUID!): Incident!
+  addAlertToIncident(incidentId: UUID!, alertId: UUID!): Incident!
+
+  # Exclusions
+  createExclusion(input: ExclusionCreateInput!): Exclusion!
+  deleteExclusions(ids: [UUID!]!): BulkActionResult!
+
+  # Policy
+  updateSitePolicy(siteId: UUID!, input: PolicyUpdateInput!): Policy!
+  updateGroupPolicy(groupId: UUID!, input: PolicyUpdateInput!): Policy!
+
+  # Threat Hunting Rules
+  createThreatHuntingRule(input: ThreatHuntingRuleCreateInput!): ThreatHuntingRule!
+  updateThreatHuntingRule(id: UUID!, input: ThreatHuntingRuleCreateInput!): ThreatHuntingRule!
+  deleteThreatHuntingRule(id: UUID!): Boolean!
+  enableThreatHuntingRule(id: UUID!): ThreatHuntingRule!
+  disableThreatHuntingRule(id: UUID!): ThreatHuntingRule!
+
+  # STAR Rules
+  createStarRule(input: StarRuleCreateInput!): StarRule!
+  updateStarRule(id: UUID!, input: StarRuleCreateInput!): StarRule!
+  deleteStarRule(id: UUID!): Boolean!
+  enableStarRule(id: UUID!): StarRule!
+  disableStarRule(id: UUID!): StarRule!
+
+  # Threat Intelligence
+  createThreatIntelIndicator(input: ThreatIntelIndicatorInput!): ThreatIntelIndicator!
+  deleteThreatIntelIndicators(ids: [UUID!]!): BulkActionResult!
+
+  # Deep Visibility
+  createDeepVisibilityQuery(input: DeepVisibilityQueryInput!): DeepVisibilityQuery!
+  cancelDeepVisibilityQuery(id: UUID!): Boolean!
+
+  # Remote Shell
+  createRemoteShellSession(agentId: UUID!): RemoteShellSession!
+  terminateRemoteShellSession(sessionId: UUID!): Boolean!
+  executeRemoteShellCommand(input: RemoteShellCommandInput!): RemoteShellCommandResult!
+
+  # Users
+  createUser(input: UserCreateInput!): User!
+  deactivateUser(userId: UUID!): User!
+  resetUserApiToken(userId: UUID!): User!
+
+  # Groups
+  createGroup(siteId: UUID!, name: String!, description: String): Group!
+  updateGroup(id: UUID!, name: String, description: String): Group!
+  deleteGroup(id: UUID!): Boolean!
+
+  # Sites
+  createSite(accountId: UUID!, name: String!, description: String): Site!
+  updateSite(id: UUID!, name: String, description: String): Site!
+  deleteSite(id: UUID!): Boolean!
+
+  # Reports
+  createReport(siteId: UUID!, name: String!, format: String!): Report!
+  deleteReport(id: UUID!): Boolean!
+}
+
+# ─── Subscriptions ────────────────────────────────────────────────────────────
+
+type Subscription {
+  threatDetected(siteIds: [UUID!]): Threat!
+  alertCreated(siteIds: [UUID!], severity: AlertSeverity): Alert!
+  agentStatusChanged(agentIds: [UUID!]): Agent!
+  incidentUpdated(siteIds: [UUID!]): Incident!
+}

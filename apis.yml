@@ -50,6 +50,8 @@ apis:
       - type: Postman Collection
         url: >-
           https://www.postman.com/api-evangelist/sentinelone/documentation/btzef0x/sentinelone
+      - type: GraphQL
+        url: graphql/sentinelone-graphql.md
 common:
   - type: GitHubOrganization
     url: https://github.com/Sentinel-One
