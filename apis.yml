@@ -47,7 +47,7 @@ apis:
       - type: Authentication
         url: >-
           https://www.stitchflow.com/user-management/sentinelone/api
-      - type: Postman Collection
+      - type: PostmanCollection
         url: >-
           https://www.postman.com/api-evangelist/sentinelone/documentation/btzef0x/sentinelone
       - type: GraphQL
@@ -61,7 +61,7 @@ common:
     url: https://www.sentinelone.com/resources/
   - type: Pricing
     url: https://www.sentinelone.com/platform-packages/
-  - type: SignUp
+  - type: Signup
     url: https://www.sentinelone.com/request-demo/
   - type: Support
     url: https://www.sentinelone.com/support/
