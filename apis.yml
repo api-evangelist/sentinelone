@@ -72,8 +72,6 @@ apis:
       - type: PostmanCollection
         url: >-
           https://www.postman.com/api-evangelist/sentinelone/documentation/btzef0x/sentinelone
-      - type: GraphQL
-        url: graphql/sentinelone-graphql.md
 common:
   - type: TrustCenter
     url: security/sentinelone-trust-center.yml
