@@ -3,7 +3,16 @@ method: searched
 checked:
 - https://aws.amazon.com/marketplace/
 - https://azuremarketplace.microsoft.com/
-marketplace_apps: []
+- https://www.sentinelone.com/partners/singularity-marketplace/
+marketplace_apps:
+- marketplace: own
+  channel: partner-built
+  app: sentinelone
+  url: https://www.sentinelone.com/partners/singularity-marketplace/
+  app_count: null
+  adapter: sweep-security.py:unreadable
+  listed: 0
+  status: not-machine-readable (HTTP 200; client-rendered; no listing links or builder signal in the HTML)
 edges:
 - partner_name: AWS Marketplace
   partner: amazon-web-services
@@ -40,3 +49,5 @@ edges:
   seller_name: SentinelOne
   detected_by: sweep-cloud-marketplaces.py
   detected: '2026-10-13'
+source:
+- https://www.sentinelone.com/partners/singularity-marketplace/
