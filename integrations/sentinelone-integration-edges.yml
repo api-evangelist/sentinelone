@@ -4,6 +4,7 @@ checked:
 - https://aws.amazon.com/marketplace/
 - https://azuremarketplace.microsoft.com/
 - https://www.sentinelone.com/partners/singularity-marketplace/
+- palo-alto-networks/integrations/palo-alto-networks-integration-edges.yml
 marketplace_apps:
 - marketplace: own
   channel: partner-built
@@ -49,5 +50,24 @@ edges:
   seller_name: SentinelOne
   detected_by: sweep-cloud-marketplaces.py
   detected: '2026-10-13'
+- partner_name: Palo Alto Networks (own)
+  partner: palo-alto-networks
+  partner_match: mirror
+  mirror_match: domain
+  type: marketplace
+  relationship: platform-app
+  direction: third-party
+  channel: partner-built
+  marketplace: own
+  evidence: https://cortex.marketplace.pan.dev/marketplace/details/SentinelOne/
+  mirror_of: palo-alto-networks/integrations/palo-alto-networks-integration-edges.yml
+  apps:
+  - SentinelOne
+  listing_count: 1
+  detected: '2026-10-14'
+  detected_by: mirror-platform-listings.py
+  category: Endpoint
+  badges:
+  - support:partner
 source:
 - https://www.sentinelone.com/partners/singularity-marketplace/
