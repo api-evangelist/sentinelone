@@ -35,6 +35,15 @@ image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/sentinelon
 tags:
   - Security
   - XDR
+  - Endpoint Detection and Response
+  - Endpoint Security
+  - Threat Detection
+  - Incident Response
+  - Cloud Security
+  - Identity Security
+tags_raw:
+  - Security
+  - XDR
   - EDR
   - Endpoint Protection
   - Threat Detection
@@ -58,6 +67,12 @@ apis:
     humanURL: https://<tenant>.sentinelone.net/api-doc/overview
     baseURL: https://<tenant>.sentinelone.net/web/api/v2.1
     tags:
+      - XDR
+      - Endpoint Detection and Response
+      - Endpoint Security
+      - Threat Management
+      - REST
+    tags_raw:
       - XDR
       - EDR
       - Endpoint Security
